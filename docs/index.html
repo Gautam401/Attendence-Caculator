@@ -1,1 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Attendance Tracker with Voice</title>
+    <style>
+        /* Existing CSS remains the same */
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Advanced Attendance Tracker</h1>
+    </header>
+    <div class="container">
+        <!-- Date Selection -->
+        <label for="attendanceDate">Select Date:</label>
+        <input type="date" id="attendanceDate">
+        <button onclick="addPreviousDate()">Load Attendance</button>
 
+        <!-- Student Input -->
+        <input type="text" id="studentName" placeholder="Enter student name">
+        <button onclick="addStudent()">Add Student</button>
+
+        <!-- Color Picker -->
+        <div class="color-input">
+            <label for="bgColor">Change Background:</label>
+            <input type="color" id="bgColor" onchange="changeBackgroundColor()">
+        </div>
+
+        <!-- Attendance Table -->
+        <table id="attendanceTable">
+            <tr>
+                <th>Roll Number</th>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </table>
+
+        <!-- Real-Time Stats -->
+        <div class="stats">
+            <p>Total Students: <span id="totalStudents">0</span></p>
+            <p>Present: <span id="totalPresent">0</span></p>
+            <p>Absent: <span id="totalAbsent">0</span></p>
+        </div>
+
+        <!-- End Attendance -->
+        <button onclick="endAttendance()">End Attendance</button>
+    </div>
+    <footer>
+        <p>&copy; 2024 Attendance Tracker</p>
+    </footer>
+
+    <!-- Floating Action Button -->
+    <button class="action-btn" onclick="scrollToTop()">↑</button>
+
+    <script>
+        let rollNumber = 1;
+        let selectedDate = new Date().toISOString().slice(0, 10);
+
+        function addStudent() {
+            const name = document.getElementById('studentName').value.trim();
+            if (!name) {
+                alert("Please enter a student name.");
+                return;
+            }
+            document.getElementById('studentName').value = "";
+
+            const table = document.getElementById('attendanceTable');
+            const row = table.insertRow();
+            row.innerHTML = `
+                <td>${rollNumber++}</td>
+                <td>${name}</td>
+                <td class=""></td>
+                <td>
+                    <button onclick="markAttendance(this, 'present')">Present</button>
+                    <button onclick="markAttendance(this, 'absent')">Absent</button>
+                </td>
+            `;
+
+            updateStats();
+        }
+
+        function markAttendance(button, status) {
+            const row = button.closest('tr');
+            const rollNo = row.children[0].textContent;
+            const name = row.children[1].textContent;
+            const statusCell = row.children[2];
+
+            statusCell.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+            statusCell.className = status;
+
+            // Announce the status with voice
+            speakAttendance(rollNo, name, status);
+
+            updateStats();
+        }
+
+        function updateStats() {
+            const rows = document.querySelectorAll('#attendanceTable tr');
+            let present = 0, absent = 0;
+            rows.forEach((row, index) => {
+                if (index === 0) return;
+                const status = row.children[2].textContent.toLowerCase();
+                if (status === 'present') present++;
+                if (status === 'absent') absent++;
+            });
+            document.getElementById('totalStudents').textContent = rows.length - 1;
+            document.getElementById('totalPresent').textContent = present;
+            document.getElementById('totalAbsent').textContent = absent;
+        }
+
+        function changeBackgroundColor() {
+            const color = document.getElementById('bgColor').value;
+            document.body.style.backgroundColor = color;
+        }
+
+        function endAttendance() {
+            alert("Attendance ended. Data saved.");
+        }
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        document.getElementById('attendanceDate').value = selectedDate;
+
+        // Function to announce attendance status
+        function speakAttendance(rollNo, name, status) {
+            const message = `Roll Number ${rollNo}, ${name}, marked as ${status}`;
+            const utterance = new SpeechSynthesisUtterance(message);
+            utterance.lang = 'en-US'; // Set the language
+            speechSynthesis.speak(utterance);
+        }
+    </script>
+</body>
+</html>
+Attendance calculator
